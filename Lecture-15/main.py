@@ -15,7 +15,7 @@ api_key = os.getenv("MISTRAL_API_KEY")
 client = Mistral(api_key=api_key)
 
 # Select Model
-model = "mistral-large-latest"
+model = "mistral-small-latest"
 
 
 # Helper Functions
@@ -31,8 +31,7 @@ def add_assistant_message(messages, text):
     messages.append(assistant_message)
 
 
-def chat(messages, system=None, temperature=1.0, stop_sequences=None):
-
+def chat(messages, system=None, temperature=1.0, stop_sequences=None, response_format=None):
     if system:
         messages = [{"role": "system", "content": system}] + messages
 
@@ -42,6 +41,9 @@ def chat(messages, system=None, temperature=1.0, stop_sequences=None):
         "messages": messages,
         "temperature": temperature,
     }
+    
+    if response_format:
+        params["response_format"] = response_format
 
     response = client.chat.complete(**params)
     text = response.choices[0].message.content
@@ -76,7 +78,7 @@ Please generate 3 objects. Respond ONLY with raw JSON.
 
     messages = []
     add_user_message(messages, prompt)
-    text = chat(messages)
+    text = chat(messages, response_format={"type": "json_object"})
     return json.loads(text)
 
 
@@ -125,7 +127,7 @@ Example response shape:
 
     messages = []
     add_user_message(messages, eval_prompt)
-    eval_text = chat(messages)
+    eval_text = chat(messages, response_format={"type": "json_object"})
     return json.loads(eval_text)
 
 
@@ -201,7 +203,7 @@ def run_eval(dataset):
     for test_case in dataset:
         result = run_test_case(test_case)
         results.append(result)
-
+        time.sleep(5)  # Increased delay to 5 seconds to avoid RPM/TPM rate limits
     average_score = mean([result["score"] for result in results])
     print(f"Average score: {average_score}")
     return results
