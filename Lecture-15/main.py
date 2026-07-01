@@ -5,6 +5,7 @@ import json
 import ast
 import re
 import os
+import time
 
 # Load API Key
 load_dotenv()
@@ -26,11 +27,7 @@ def add_user_message(messages, text):
 
 
 def add_assistant_message(messages, text):
-    assistant_message = {
-        "role": "assistant",
-        "content": text,
-        "prefix": True
-    }
+    assistant_message = {"role": "assistant", "content": text, "prefix": True}
     messages.append(assistant_message)
 
 
@@ -48,7 +45,7 @@ def chat(messages, system=None, temperature=1.0, stop_sequences=None):
 
     response = client.chat.complete(**params)
     text = response.choices[0].message.content
-    
+
     # Strip markdown code blocks
     text = re.sub(r"^```[a-z]*\n", "", text, flags=re.MULTILINE)
     text = re.sub(r"```$", "", text, flags=re.MULTILINE)
@@ -204,7 +201,6 @@ def run_eval(dataset):
     for test_case in dataset:
         result = run_test_case(test_case)
         results.append(result)
-        time.sleep(2)  # Added delay to avoid Rate Limit (429)
 
     average_score = mean([result["score"] for result in results])
     print(f"Average score: {average_score}")
