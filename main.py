@@ -1,26 +1,105 @@
 from dotenv import load_dotenv
 from anthropic import Anthropic
-import os
 
+# Load API Key from .env
 load_dotenv()
 
-api_key = os.getenv("ANTHROPIC_API_KEY")
+# Create Anthropic Client
+client = Anthropic()
 
-client = Anthropic(api_key=api_key)
+# Select Model
+model = "claude-sonnet-4-0"
 
-try:
-    message = client.messages.create(
-        model="claude-sonnet-4-0",
-        max_tokens=20,
-        messages=[
-            {
-                "role": "user",
-                "content": "Hi"
-            }
-        ]
-    )
 
-    print(message.content[0].text)
+# Helper Function 1
+# Add User Message
+def add_user_message(messages, text):
+    user_message = {
+        "role": "user",
+        "content": text
+    }
+    messages.append(user_message)
 
-except Exception as e:
-    print(e)
+# Helper Function 2
+# Add Assistant Message
+
+def add_assistant_message(messages, text):
+    assistant_message = {
+        "role": "assistant",
+        "content": text
+    }
+    messages.append(assistant_message)
+
+
+# Helper Function 3
+# Call Claude API
+def chat(messages, system=None, temperature=0.2):
+
+    params = {
+        "model": model,
+        "max_tokens": 1000,
+        "messages": messages,
+        "temperature": temperature
+    }
+
+    if system:
+        params["system"] = system
+
+    with client.messages.stream(**params) as stream:
+
+        for text in stream.text_stream:
+            print(text, end="", flush=True)
+
+        print()
+
+        final_message = stream.get_final_message()
+
+        return final_message.content[0].text
+
+# Main Chatbot
+messages = []
+
+system_prompt = """
+You are a patient math tutor.
+
+Do not directly answer the student's questions.
+
+Guide them step by step.
+
+Give hints first.
+
+Explain in a simple way.
+"""
+
+print("=" * 50)
+print("Claude Chatbot Started")
+print("Type 'exit' to quit")
+print("=" * 50)
+
+while True:
+
+    # Take user input
+    user_input = input("\nYou: ")
+
+    # Exit chatbot
+    if user_input.lower() == "exit":
+        print("\nGoodbye 👋")
+        break
+
+    # Add user message
+    add_user_message(messages, user_input)
+
+    try:
+        print("\nClaude: ", end="")
+
+        answer = chat(messages, system_prompt,0.2)
+        # Add assistant response
+        add_assistant_message(messages, answer)
+
+        # Print response
+
+
+
+    except Exception as e:
+        print("\nError:", e)
+        break
