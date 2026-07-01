@@ -1,0 +1,17 @@
+[
+  {
+    "task": "Generate a JSON configuration for an AWS Lambda function that includes environment variables for a database connection (host, port, username, password) and a timeout setting of 30 seconds.",
+    "format": "json",
+    "solution_criteria": "The JSON must include keys for 'Environment' with nested 'Variables' for the database connection details, and a 'Timeout' key set to 30. The structure should be valid and match AWS Lambda configuration standards."
+  },
+  {
+    "task": "Write a Python function that extracts all ARNs (Amazon Resource Names) from a given string using a regular expression. The function should return a list of all unique ARNs found.",
+    "format": "python",
+    "solution_criteria": "The function must use a regex pattern to match ARNs (e.g., 'arn:aws:service:region:account-id:resource'). It should handle edge cases like no matches and return only unique ARNs in a list."
+  },
+  {
+    "task": "Create a regular expression to validate an AWS S3 bucket name according to AWS naming rules. The regex should ensure the bucket name is 3-63 characters long, starts and ends with a lowercase letter or number, and contains only lowercase letters, numbers, dots, or hyphens.",
+    "format": "regex",
+    "solution_criteria": "The regex must enforce all AWS S3 bucket naming rules: length (3-63), allowed characters (lowercase letters, numbers, dots, hyphens), and no consecutive dots or hyphens. It should reject invalid names."
+  }
+]
