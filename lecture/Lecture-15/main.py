@@ -8,13 +8,16 @@ import os
 import time
 
 # Load API Key
+# .env file se API key load kr raha hai
 load_dotenv()
 
 # Create Client
+# Mistral API ka client initialize kr raha hai
 api_key = os.getenv("MISTRAL_API_KEY")
 client = Mistral(api_key=api_key)
 
 # Select Model
+# Model ka naam set kr raha hai jo use hoga
 model = "mistral-small-latest"
 
 
@@ -22,19 +25,23 @@ model = "mistral-small-latest"
 
 
 def add_user_message(messages, text):
+    # User ka message dictionary bana ke list mein add kr raha hai
     user_message = {"role": "user", "content": text}
     messages.append(user_message)
 
 
 def add_assistant_message(messages, text):
+    # Assistant (AI) ka message dictionary bana ke list mein add kr raha hai
     assistant_message = {"role": "assistant", "content": text, "prefix": True}
     messages.append(assistant_message)
 
 
 def chat(messages, system=None, temperature=1.0, stop_sequences=None, response_format=None):
+    # System prompt agar hai toh usko starting mein add kr raha hai
     if system:
         messages = [{"role": "system", "content": system}] + messages
 
+    # API call ke liye parameters set kr raha hai
     params = {
         "model": model,
         "max_tokens": 1000,
@@ -42,19 +49,23 @@ def chat(messages, system=None, temperature=1.0, stop_sequences=None, response_f
         "temperature": temperature,
     }
     
+    # Agar JSON response chahiye toh format add kr raha hai
     if response_format:
         params["response_format"] = response_format
 
+    # Model ko call kr ke response le raha hai
     response = client.chat.complete(**params)
     text = response.choices[0].message.content
 
     # Strip markdown code blocks
+    # Output se markdown formatting hata raha hai (sirf code rakhne ke liye)
     text = re.sub(r"^```[a-z]*\n", "", text, flags=re.MULTILINE)
     text = re.sub(r"```$", "", text, flags=re.MULTILINE)
     return text.strip()
 
 
 def generate_dataset():
+    # Prompt define kr raha hai dataset generate krne ke liye
     prompt = """
 Generate a evaluation dataset for a prompt evaluation. The dataset will be used to evaluate prompts
 that generate Python, JSON, or Regex specifically for AWS-related tasks. Generate an array of JSON objects,
@@ -77,11 +88,15 @@ Please generate 3 objects. Respond ONLY with raw JSON.
 """
 
     messages = []
+    # User message list mein daal raha hai
     add_user_message(messages, prompt)
+    # Model se JSON format mein dataset maang raha hai
     text = chat(messages, response_format={"type": "json_object"})
+    # String JSON ko Python dictionary/list mein convert kr raha hai
     return json.loads(text)
 
 
+# Dataset generate kr ke JSON file mein save kr raha hai
 dataset = generate_dataset()
 
 with open("dataset.json", "w") as f:
@@ -89,6 +104,7 @@ with open("dataset.json", "w") as f:
 
 
 def grade_by_model(test_case, output):
+    # AI se solution check karwane ke liye prompt bana raha hai
     eval_prompt = f"""
 You are an expert AWS code reviewer.
 Your task is to evaluate the following AI-generated solution.
@@ -127,11 +143,13 @@ Example response shape:
 
     messages = []
     add_user_message(messages, eval_prompt)
+    # Model se solution ka evaluation le raha hai JSON format mein
     eval_text = chat(messages, response_format={"type": "json_object"})
     return json.loads(eval_text)
 
 
 def run_prompt(test_case):
+    # Task solve krne ke liye simple prompt bana raha hai
     prompt = f"""
 Please solve the following task:
 
@@ -143,11 +161,13 @@ Please solve the following task:
 
     messages = []
     add_user_message(messages, prompt)
+    # Model se task solve karwa ke direct code/output le raha hai
     output = chat(messages)
     return output
 
 
 def validate_json(text):
+    # Check kr raha hai ki output valid JSON hai ya nahi
     try:
         json.loads(text.strip())
         return 10
@@ -156,6 +176,7 @@ def validate_json(text):
 
 
 def validate_python(text):
+    # Check kr raha hai ki output valid Python code hai ya nahi
     try:
         ast.parse(text.strip())
         return 10
@@ -164,6 +185,7 @@ def validate_python(text):
 
 
 def validate_regex(text):
+    # Check kr raha hai ki output valid Regex hai ya nahi
     try:
         re.compile(text.strip())
         return 10
@@ -172,6 +194,7 @@ def validate_regex(text):
 
 
 def grade_syntax(response, test_case):
+    # Syntax check kr raha hai expected format ke hisaab se
     output_format = test_case["format"]
     if output_format == "json":
         return validate_json(response)
@@ -183,11 +206,15 @@ def grade_syntax(response, test_case):
 
 
 def run_test_case(test_case):
+    # Task solve karwa raha hai
     output = run_prompt(test_case)
+    # AI se solution evaluate karwa raha hai
     model_grade = grade_by_model(test_case, output)
     model_score = model_grade["score"]
     reasoning = model_grade["reasoning"]
+    # Syntax evaluation kr raha hai
     syntax_score = grade_syntax(output, test_case)
+    # Final score nikaal raha hai dono ka average le ke
     score = (model_score + syntax_score) / 2
 
     return {
@@ -200,17 +227,22 @@ def run_test_case(test_case):
 
 def run_eval(dataset):
     results = []
+    # Har task pe ek ek kr ke loop chala raha hai aur test kr raha hai
     for test_case in dataset:
         result = run_test_case(test_case)
         results.append(result)
         time.sleep(5)  # Increased delay to 5 seconds to avoid RPM/TPM rate limits
+    # Total average score nikaal raha hai
     average_score = mean([result["score"] for result in results])
     print(f"Average score: {average_score}")
     return results
 
 
+# Saved dataset file read kr raha hai
 with open("dataset.json", "r") as f:
     dataset = json.load(f)
 
+# Evaluation chala raha hai
 results = run_eval(dataset)
+# Results ko format kr ke print kr raha hai
 print(json.dumps(results, indent=2))
