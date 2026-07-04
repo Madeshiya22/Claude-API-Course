@@ -31,7 +31,7 @@ def add_assistant_message(messages, text):
     messages.append(assistant_message)
 
 
-# Helper Function 3
+# Helper Function 
 # Call Claude API
 def chat(messages, system=None, temperature=0.2):
 

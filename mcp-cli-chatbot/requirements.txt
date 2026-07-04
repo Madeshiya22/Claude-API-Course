@@ -1,0 +1,5 @@
+anthropic
+mcp
+python-dotenv
+pydantic
+uv
