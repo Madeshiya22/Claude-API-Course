@@ -1,0 +1,11 @@
+[project]
+name = "mcp-course"
+version = "0.1.0"
+description = "A brand new Python project for learning the Model Context Protocol (MCP)."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic",
+    "mcp",
+    "python-dotenv",
+]
